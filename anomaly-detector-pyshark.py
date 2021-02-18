@@ -13,9 +13,9 @@ import numpy
 floating_window = []
 window_width = 60
 shift = 1
-#file = '/home/rocco/MASTER/project-work/file-pcapng/traffic-stanby.pcapng'
-#file = '/home/rocco/MASTER/project-work/file-pcapng/spegni-accendi-thermostat.pcapng'
-file = '/home/rocco/MASTER/project-work/file-pcapng/traffic-with-operations-thermostat.pcapng'
+#file = 'file-pcapng/traffic-stanby.pcapng'
+#file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
+file = 'file-pcapng/traffic-with-operations-thermostat.pcapng'
 
 IOT_DEVICE_IP = "10.42.0.175"
 #KNOW_SERVER [13.81.202.19, 104.45.28.116, 13.95.157.235]
