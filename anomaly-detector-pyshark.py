@@ -170,15 +170,14 @@ def connection_duration(floating_window):
     return duration_connection
 
 
-
 def make_decision(floating_window):
     media, count_downstream = media_downstream(floating_window)
     moda, count_upstream = moda_upstream(floating_window)
 
     # Check IDLE
-    if(media == 107 or media == -1):
-        if (moda == 107 or moda == -1):
-            if (count_downstream == count_downstream):
+    if media == 107 or media == -1:
+        if moda == 107 or moda == -1:
+            if count_downstream == count_downstream:
                 STATUS = "IDLE"
                 return STATUS
 
@@ -200,21 +199,22 @@ def make_decision(floating_window):
 
 
     #Check USER_ACTIVITY
-    if (media > 107 ):
-        if (moda > 107):
-            if (count_downstream > count_upstream):
+    if media > 107 :
+        if moda > 107:
+            if count_downstream > count_upstream:
                 return "USER_ACTIVITY"
 
     # Check SERIOUS ANOMALY
-    if (count_downstream + 1 < count_upstream):
+    if count_downstream + 1 < count_upstream:
         return "SERIOUS_ANOMALY"
     #TODO altro check sulla durata delle sessione
 
     return "MINOR_ANOMALY"
 
+
 # CODICE
 packets = pyshark.FileCapture(file)
-packets_list = list((packets))
+packets_list = list(packets)
 print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : 0")
 
 fill_list(packets_list)
@@ -227,34 +227,5 @@ while True:
     STATUS = make_decision(floating_window)
     print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : " + str(
         len(floating_window)) + " DECISION : " + STATUS)
-    if(len(packets_list) < 20):
+    if len(packets_list) < 20:
         break
-
-
-# PROVE
-#print(type(packets))
-#print(dir(packets))
-#print(type(floating_window))
-#print(dir(floating_window))
-
-"""
-print(cap[1])
-#print("protocol", + cap[1].source)
-#print(packet['ip'].dst)
-#print(cap[2].eth.destination)
-#print(cap['ip'].src)
-print(dir(cap[0].ip))
-
-print(dir(cap[0].ip.dst))
-print(cap[0].ip.dst.show)
-print("IP Destination: " + str(cap[0].ip.dst))
-print("IP source: " + str(cap[0].ip.src))
-print("Packet length: " + str(cap[0].length))
-print("Highest layer: " + cap[0].highest_layer)
-print("sniff_time: " + str(cap[0].sniff_time))
-print("sniff_timestamp: " + cap[0].sniff_timestamp)
-diff3=cap[1].sniff_time-cap[0].sniff_time
-print(type(diff3))
-#if diff3 < 10:
-#    print("diff: " + str(diff3))
-"""
