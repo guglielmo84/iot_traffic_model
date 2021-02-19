@@ -8,10 +8,13 @@ Created on Sat Feb 13 13:35:54 2021
 from statistics import mean, mode
 import pyshark
 
+#TODO PARAMETRIZZARE il file pcapng come input da riga di comando
+
 # DATI
-floating_window = []
+sliding_window = []
 window_width = 60
 shift = 1
+
 #file = 'file-pcapng/traffic-stanby.pcapng'
 #file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
 file = 'file-pcapng/traffic-with-operations-thermostat.pcapng'
@@ -29,42 +32,42 @@ def fill_list(packets_list):
         #print("Relative time : " + str(relative_time))
         if relative_time < window_width:
             count = count + 1
-            floating_window.append(packet)
+            sliding_window.append(packet)
             #packets_list.remove(packet)
         else:
             del packets_list[:count]
-            #print("There are " + str(len(floating_window)) + " items in the floating window")
-            return floating_window
+            #print("There are " + str(len(sliding_window)) + " items in the sliding_window")
+            return sliding_window
 
 
-def update_list(packets_list, floating_window):
+def update_list(packets_list, sliding_window):
     count = 0
-    riferimento = float(floating_window[0].sniff_timestamp)
-    for packet in floating_window:
+    riferimento = float(sliding_window[0].sniff_timestamp)
+    for packet in sliding_window:
         relative_time = float(packet.sniff_timestamp) - riferimento
         if relative_time < shift:
             count = count + 1
-            #floating_window.remove(packet)
+            #sliding_window.remove(packet)
         else:
-            del floating_window[:count]
+            del sliding_window[:count]
             break
     count = 0
-    riferimento = float(floating_window[0].sniff_timestamp) + window_width
+    riferimento = float(sliding_window[0].sniff_timestamp) + window_width
     for packet in packets_list:
         relative_time = float(packet.sniff_timestamp) - riferimento
         if relative_time < 0:
             count = count + 1
-            floating_window.append(packet)
+            sliding_window.append(packet)
             #packets_list.remove(packet)
         else:
             del packets_list[:count]
-            return packets_list, floating_window
+            return packets_list, sliding_window
 
 
-def media_downstream(floating_window):
+def media_downstream(sliding_window):
     count = 0
     size_list = []
-    for packet in floating_window:
+    for packet in sliding_window:
         count = count + 1
         try:
             #print("count : " + str(count) + " IP_DST : " + packet.ip.dst + " Protocol : " + packet.highest_layer + " Packet length: " + str(packet.length))
@@ -84,10 +87,10 @@ def media_downstream(floating_window):
     return media, count_downstream
 
 
-def moda_upstream(floating_window):
+def moda_upstream(sliding_window):
     count = 0
     size_list = []
-    for packet in floating_window:
+    for packet in sliding_window:
         count = count + 1
         try:
             #print("count : " + str(count) + " IP_DST : " + packet.ip.dst + " Protocol : " + packet.highest_layer + " Packet length: " + str(packet.length))
@@ -108,7 +111,7 @@ def moda_upstream(floating_window):
     return moda, count_upstream
 
 
-def connection_duration(floating_window):
+def connection_duration(sliding_window):
     count = 0
     # stream matrix = [IP, PORT, IP, PORT]
     stream_matrix = []
@@ -116,7 +119,7 @@ def connection_duration(floating_window):
     # Lista principale: (ONLY_SYN se trovo la SYN senza FYN, ONLY_FIN viceversa, durata s trovo la coppia SYN-FIN)
     duration_connection = []
     # Filtra per IP source
-    for packet in floating_window:
+    for packet in sliding_window:
         try:
             if packet.ip.src == IOT_DEVICE_IP:
                 if packet.tcp.flags_syn.int_value == 1:
@@ -134,7 +137,7 @@ def connection_duration(floating_window):
     #print(stream_matrix)
     #print(syn_timestamp_list)
     count_synfin = 0
-    for packet in floating_window:
+    for packet in sliding_window:
         try:
             if packet.ip.dst == IOT_DEVICE_IP:
                 if packet.tcp.flags_fin.int_value == 1:
@@ -169,9 +172,9 @@ def connection_duration(floating_window):
     return duration_connection
 
 
-def make_decision(floating_window):
-    media, count_downstream = media_downstream(floating_window)
-    moda, count_upstream = moda_upstream(floating_window)
+def make_decision(sliding_window):
+    media, count_downstream = media_downstream(sliding_window)
+    moda, count_upstream = moda_upstream(sliding_window)
 
     # Check IDLE
     if media == 107 or media == -1:
@@ -181,12 +184,12 @@ def make_decision(floating_window):
 
     # Check RESTARTING
     ntp = False
-    for packet in floating_window:
+    for packet in sliding_window:
         if packet.highest_layer == "NTP":
             ntp = True
     count = 0
-    if ntp is True or len(connection_duration(floating_window)) > 2:
-        for duration in connection_duration(floating_window):
+    if ntp is True or len(connection_duration(sliding_window)) > 2:
+        for duration in connection_duration(sliding_window):
             if duration == "ONLY_SYN":
                 continue
             if duration == "ONLY_FIN":
@@ -219,14 +222,14 @@ packets_list = list(packets)
 print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : 0")
 
 fill_list(packets_list)
-STATUS = make_decision(floating_window)
-print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : " + str(len(floating_window)) + " DECISION : " + STATUS)
+STATUS = make_decision(sliding_window)
+print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : " + str(len(sliding_window)) + " DECISION : " + STATUS)
 
 
 while True:
-    update_list(packets_list, floating_window)
-    STATUS = make_decision(floating_window)
+    update_list(packets_list, sliding_window)
+    STATUS = make_decision(sliding_window)
     print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : " + str(
-        len(floating_window)) + " DECISION : " + STATUS)
+        len(sliding_window)) + " DECISION : " + STATUS)
     if len(packets_list) < 20:
         break
