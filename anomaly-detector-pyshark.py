@@ -7,7 +7,6 @@ Created on Sat Feb 13 13:35:54 2021
 """
 from statistics import mean, mode
 import pyshark
-import numpy
 
 # DATI
 floating_window = []
@@ -94,7 +93,7 @@ def moda_upstream(floating_window):
             #print("count : " + str(count) + " IP_DST : " + packet.ip.dst + " Protocol : " + packet.highest_layer + " Packet length: " + str(packet.length))
             if packet.ip.src == IOT_DEVICE_IP:
                 if packet.highest_layer == "SSL":
-                    size_list.append(float(packet.length))
+                    size_list.append(int(packet.length))
         except AttributeError:
             pass
             #print("Continua...")
@@ -178,8 +177,7 @@ def make_decision(floating_window):
     if media == 107 or media == -1:
         if moda == 107 or moda == -1:
             if count_downstream == count_downstream:
-                STATUS = "IDLE"
-                return STATUS
+                return "IDLE"
 
     # Check RESTARTING
     ntp = False
@@ -189,17 +187,21 @@ def make_decision(floating_window):
     count = 0
     if ntp is True or len(connection_duration(floating_window)) > 2:
         for duration in connection_duration(floating_window):
-            if duration == "ONLY_SYN": continue
-            if duration == "ONLY_FIN": continue
+            if duration == "ONLY_SYN":
+                continue
+            if duration == "ONLY_FIN":
+                continue
             if duration > 5:
                 count = count + 1
         if count < 2:
             #TODO Mancano check Annidati
             return "RESTARTING"
+        else:
+            return "SERIOUS_ANOMALY"
 
 
     #Check USER_ACTIVITY
-    if media > 107 :
+    if media > 107:
         if moda > 107:
             if count_downstream > count_upstream:
                 return "USER_ACTIVITY"
@@ -207,7 +209,6 @@ def make_decision(floating_window):
     # Check SERIOUS ANOMALY
     if count_downstream + 1 < count_upstream:
         return "SERIOUS_ANOMALY"
-    #TODO altro check sulla durata delle sessione
 
     return "MINOR_ANOMALY"
 
