@@ -15,9 +15,9 @@ sliding_window = []
 window_width = 60
 shift = 1
 
-#file = 'file-pcapng/traffic-stanby.pcapng'
+file = 'file-pcapng/traffic-stanby.pcapng'
 #file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
-file = 'file-pcapng/traffic-with-operations-thermostat.pcapng'
+#file = 'file-pcapng/traffic-with-operations-thermostat.pcapng'
 
 IOT_DEVICE_IP = "10.42.0.175"
 #KNOW_SERVER [13.81.202.19, 104.45.28.116, 13.95.157.235]
@@ -109,9 +109,13 @@ def moda_upstream(sliding_window):
     else:
         throughput = sum(size_list)
 
-    try:
-        moda = mode(size_list)
-    except :
+    #La moda ha senso se ci sono almeno 3 pacchetti
+    if count > 2:
+        try:
+            moda = mode(size_list)
+        except :
+            moda = -1
+    else:
         moda = -1
 
     print("Upstream SIZE LIST: " + str(size_list) + " MODE : " + str(moda) + " COUNT : " + str(count) + " THROUGHPUT : " + str(throughput))
@@ -186,7 +190,7 @@ def make_decision(sliding_window):
     # Check IDLE
     if media == 107 or media == -1:
         if moda == 107 or moda == -1:
-            if count_downstream == count_downstream:
+            if count_downstream == count_upstream:
                 return "IDLE"
 
     # Check RESTARTING
