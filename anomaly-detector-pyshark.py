@@ -15,8 +15,8 @@ sliding_window = []
 window_width = 60
 shift = 1
 
-file = 'file-pcapng/traffic-stanby.pcapng'
-#file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
+#file = 'file-pcapng/traffic-stanby.pcapng'
+file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
 #file = 'file-pcapng/traffic-with-operations-thermostat.pcapng'
 
 IOT_DEVICE_IP = "10.42.0.175"
@@ -167,7 +167,7 @@ def connection_duration(sliding_window):
                         count_synfin = count_synfin + 1
                     except ValueError:
                         duration_connection.append("ONLY_FIN")
-                        print("Trovata una FIN ma non la SYN")
+                        #print("Trovata una FIN ma non la SYN")
 
             #stream_matrix.append(stream)
             #syn_timestamp_list.append(syn_timestamp)
@@ -211,6 +211,7 @@ def make_decision(sliding_window):
             #TODO Mancano check Annidati
             return "RESTARTING"
         else:
+            print("FATAL: Ci sono " + count + " cnnessioni durature contemporaneamente")
             return "SERIOUS_ANOMALY"
 
 
@@ -223,6 +224,7 @@ def make_decision(sliding_window):
 
     # Check SERIOUS ANOMALY
     if count_downstream + 1 < count_upstream:
+        print("FATAL: il conteggio dei pacchetti in upstream è sospetto")
         return "SERIOUS_ANOMALY"
 
     return "MINOR_ANOMALY"
