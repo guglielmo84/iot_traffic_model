@@ -215,7 +215,6 @@ def make_decision(sliding_window):
             if duration > 5:
                 count = count + 1
         if count < 2:
-            #TODO Mancano check Annidati
             return "RESTARTING"
         else:
             print("FATAL: Ci sono " + count + " cnnessioni durature contemporaneamente")
@@ -237,7 +236,7 @@ def make_decision(sliding_window):
     return "MINOR_ANOMALY"
 
 
-# CODICE
+# MAIN
 packets = pyshark.FileCapture(file)
 packets_list = list(packets)
 print("Packets_LIST : " + str(len(packets_list)) + " Floating Window : 0")
