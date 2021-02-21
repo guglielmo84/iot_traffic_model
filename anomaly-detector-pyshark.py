@@ -67,8 +67,9 @@ def update_list(packets_list, sliding_window):
 def media_downstream(sliding_window):
     count = 0
     size_list = []
+    throughput = 0
+    media = 0
     for packet in sliding_window:
-        count = count + 1
         try:
             #print("count : " + str(count) + " IP_DST : " + packet.ip.dst + " Protocol : " + packet.highest_layer + " Packet length: " + str(packet.length))
             if packet.ip.dst == IOT_DEVICE_IP:
@@ -77,21 +78,23 @@ def media_downstream(sliding_window):
         except AttributeError:
             pass
             #print("Continua...")
-    try:
-        media = mean(size_list)
-        count_downstream = len(size_list)
-    except:
+    count = len(size_list)
+    if count == 0:
         media = -1
-        count_downstream = -1
-    print("Downstream SIZE LIST: " + str(size_list) + " AVERAGE : " + str(media))
-    return media, count_downstream
+        throughput = -1
+    else:
+        media = mean(size_list)
+        throughput = sum(size_list)
+
+    print("Downstream SIZE LIST: " + str(size_list) + " AVERAGE : " + str(media) + " COUNT : " + str(count) + " THROUGHPUT : " + str(throughput))
+    return media, count, throughput
 
 
 def moda_upstream(sliding_window):
     count = 0
     size_list = []
+    moda = 0
     for packet in sliding_window:
-        count = count + 1
         try:
             #print("count : " + str(count) + " IP_DST : " + packet.ip.dst + " Protocol : " + packet.highest_layer + " Packet length: " + str(packet.length))
             if packet.ip.src == IOT_DEVICE_IP:
@@ -100,15 +103,19 @@ def moda_upstream(sliding_window):
         except AttributeError:
             pass
             #print("Continua...")
+    count = len(size_list)
+    if count == 0:
+        throughput = -1
+    else:
+        throughput = sum(size_list)
+
     try:
         moda = mode(size_list)
-        count_upstream = len(size_list)
-    except:
+    except :
         moda = -1
-        count_upstream = -1
 
-    print("Upstream SIZE LIST: " + str(size_list) + " MODE : " + str(moda))
-    return moda, count_upstream
+    print("Upstream SIZE LIST: " + str(size_list) + " MODE : " + str(moda) + " COUNT : " + str(count) + " THROUGHPUT : " + str(throughput))
+    return moda, count, throughput
 
 
 def connection_duration(sliding_window):
@@ -173,8 +180,8 @@ def connection_duration(sliding_window):
 
 
 def make_decision(sliding_window):
-    media, count_downstream = media_downstream(sliding_window)
-    moda, count_upstream = moda_upstream(sliding_window)
+    media, count_downstream, throughput_downstream = media_downstream(sliding_window)
+    moda, count_upstream, throughput_upstream = moda_upstream(sliding_window)
 
     # Check IDLE
     if media == 107 or media == -1:
@@ -205,9 +212,10 @@ def make_decision(sliding_window):
 
     #Check USER_ACTIVITY
     if media > 107:
-        if moda > 107:
-            if count_downstream > count_upstream:
-                return "USER_ACTIVITY"
+        if moda > 107 or moda == -1:
+            if throughput_downstream < throughput_upstream:
+                if count_downstream > count_upstream:
+                    return "USER_ACTIVITY"
 
     # Check SERIOUS ANOMALY
     if count_downstream + 1 < count_upstream:
