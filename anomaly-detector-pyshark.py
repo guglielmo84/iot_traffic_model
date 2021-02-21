@@ -3,20 +3,27 @@
 """
 Created on Sat Feb 13 13:35:54 2021
 
-@author: rocco
+@author: Rocco Guglielmo
 """
+import argparse
 from statistics import mean, mode
 import pyshark
 
-#TODO PARAMETRIZZARE il file pcapng come input da riga di comando
+#HELP
+parser = argparse.ArgumentParser(description='IoT encrypted traffic analyzer')
+parser.add_argument('-f', '--file', type=str,
+                    help='File pcap to analize, default=file-pcapng/traffic-with-operations-thermostat.pcapng',
+                    default="file-pcapng/traffic-with-operations-thermostat.pcapng")
+args = parser.parse_args()
+
 
 # DATI
 sliding_window = []
 window_width = 60
 shift = 1
-
+file = args.file
 #file = 'file-pcapng/traffic-stanby.pcapng'
-file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
+#file = 'file-pcapng/spegni-accendi-thermostat.pcapng'
 #file = 'file-pcapng/traffic-with-operations-thermostat.pcapng'
 
 IOT_DEVICE_IP = "10.42.0.175"
